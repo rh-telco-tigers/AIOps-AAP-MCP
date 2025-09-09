@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aap-mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aap-mcp-server
+  template:
+    metadata:
+      labels:
+        app: aap-mcp-server
+    spec:
+      containers:
+      - name: aap-mcp-server
+        image: quay.io/rh-ee-saahmed/aap-mcp-server
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: aap-mcp-secrets

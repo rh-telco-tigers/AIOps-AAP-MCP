@@ -1,0 +1,18 @@
+---
+- name: Create Job Template for Remediation
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Create Job Template
+      ansible.controller.job_template:
+        name: "Execute HTTPD Remediation"
+        job_type: "run"
+        inventory: "{{ input_inventory | default('lab-inventory') }}"
+        project: "{{ input_project | default('Lightspeed-Playbooks') }}"
+        playbook: "{{ input_playbook | default('lightspeed-response.yml') }}"
+        credential: "{{ input_credential | default('lab-credential') }}"
+        validate_certs: true
+        execution_environment: "Default execution environment"
+        become_enabled: true
+        ask_limit_on_launch: true

@@ -1,0 +1,8 @@
+# Ignore AAP Secrets File
+openshift/aap-mcp/original-aap-mcp-secrets.yaml
+
+# Ignore LLama Secrets File
+openshift/llama-stack/original-llama-secret.yaml
+
+# Ignore Tavily Secrets File
+openshift/streamlit/original_tavily_secret.yaml

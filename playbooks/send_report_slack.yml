@@ -1,0 +1,53 @@
+---
+- name: Send logs to Slack on HTTP failure
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    slack_token: ""
+
+  tasks:
+    - name: Fail if required variables are not set
+      ansible.builtin.fail:
+        msg: "Slack Instance must be set!"
+      when: slack_token | default('') | trim == ''
+
+    - name: Set systemd facts
+      ansible.builtin.set_fact:
+        linux_service: "{{ input_linux_service | default('httpd') }}"
+
+    - name: Send error notification message via Slack
+      community.general.slack:
+        token: "{{ slack_token }}"
+        attachments:
+          - text: "!!!!!! ALERT !!!!!!"
+            color: "#ff00dd"
+            title: "{{ linux_service | capitalize }} error detected"
+            fields:
+              - title: Issue
+                value: "{{ linux_service | capitalize }} error detected"
+                short: true
+              - title: Details
+                value: "{{ slack_message }}"
+                short: true
+      delegate_to: localhost
+      when: (slack_message | default('') | length) > 0
+
+    - name: Send RCA insights from RHEL AI to Mattermost
+      community.general.slack:
+        token: "{{ slack_token }}"
+        attachments:
+          - text: "!!!!!! RCA INSIGHT !!!!!!"
+            color: "#ffa500"
+            title: "{{ linux_service | capitalize }} Root Cause Identified"
+            fields:
+              - title: RCA of {{ linux_service | capitalize }} error detected
+                value: "AI-Generated Explanation"
+                short: true
+              - title: Details
+                value: "{{ rca_response.json.choices[0].text | default('No RCA available') | trim }}"
+                short: true
+      delegate_to: localhost
+      when: (rca_response.json.choices[0].text | default('') | length) > 0
+
+    
