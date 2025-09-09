@@ -56,7 +56,8 @@ with default values
 
                - In the **OpenShift Web Console**, go to the `llama-serve` project.
                - Find and select the **Secret** named `aap-mcp-secrets`.
-               - Obtain your Ansible Automation Platform (AAP) token by following the instructions at the provided URL.
+               - Obtain your Ansible Automation Platform (AAP) token by following the instructions at the provided [URL](../AAP/STEPS_AAP_API_TOKEN.md
+).
                - Update the following fields in the `aap-mcp-secrets` Secret with your information:
                  
                  -   `AAP_URL`
