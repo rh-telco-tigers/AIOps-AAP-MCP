@@ -1,6 +1,6 @@
 ### Getting Your API Token for AAP
 
-Method 1: AAP Web Interface
+**Method 1: AAP Web Interface**
 
 1. Log into your AAP web interface
 2. Click on your username in the top right corner
@@ -11,7 +11,7 @@ Method 1: AAP Web Interface
 7. Copy the generated token immediately (it won't be shown again)
 
 --- 
-Method 2: Command Line
+**Method 2: Command Line**
 
         curl -k -X POST \
         "https://your-aap-server.com/api/v2/tokens/" \
@@ -24,4 +24,4 @@ Method 2: Command Line
         }'
 
 
-**Follow method 1 to create a new token for Event Driven Ansible**
+Follow **Method 1** to create a new token for Event Driven Ansible
