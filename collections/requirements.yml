@@ -1,0 +1,7 @@
+---
+collections:
+  - name: https://github.com/rhpds/lb2961.ai_driven_aap.git
+    type: git
+    version: main
+  - name: containers.podman
+  - name: community.general
