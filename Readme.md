@@ -3,7 +3,9 @@
 ## 📌 Overview
 This project demonstrates an **end-to-end AIOps automation framework** built using:
 - **Ansible Automation Platform (AAP)**
-- **OpenShift** 
+- **OpenShift AI**
+- **LLamaStack Agent**
+- **Ansible Lightspeed**
 
 The solution automates detection, analysis, notification, and remediation of node/service failures (e.g., HTTP service downtime).
 
