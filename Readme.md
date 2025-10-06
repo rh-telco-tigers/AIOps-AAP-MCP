@@ -161,7 +161,7 @@ By following these steps, you will have:
    ```text
       Run a Lightspeed job template with ID 19 with extra_vars
       {
-      "lightspeed_prompt": "Remove the invalid directive 'InvalidDirectiveHere' from the httpd configuration file. Then restart the httpd service. Execute against node 1 `         host"
+      "lightspeed_prompt": "Remove the invalid directive 'InvalidDirectiveHere' from the httpd configuration file. Then restart the httpd service. Execute against node 1 host"
       }
       and then give the generated playbook
    ```
