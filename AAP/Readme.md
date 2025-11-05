@@ -46,7 +46,14 @@ III. Save and verify that **MyProject** status is **Success**.
 
 ---
 
-### 📝 Step 4: Create Job Templates
+### 📝 Step 4: Create/Modify Exisiting Job Templates
+
+I. Delete the following templates
+   - ⚙️ Build Ansible Lightspeed Job Template
+   - ✅ Restore Apache
+   - 📣 Notify via Mattermost
+   - 🤖 RHEL AI: Analyze Incident
+   - ⚙️ Build HTTPD Remediation Template
 
 I. Navigate to **Automation Execution → Templates → Create Job Template**  
 
@@ -86,9 +93,8 @@ III. Create "Agent RCA" Template
    | Credentials     | AAP                                  |
    | Extra variables | `llama_stack_url: "<YOUR LLAMA STACK URL>"`  |
 
-IV. Rename ⚙️ Build HTTPD Remediation Template and edit the playbook
+IV. Create ⚙️ Build Template 
 
-Navigate to **Automation Execution → Templates → ⚙️ Build HTTPD Remediation Template → Edit Template
 
    | Parameter       | Value                                |
    |-----------------|--------------------------------------|
