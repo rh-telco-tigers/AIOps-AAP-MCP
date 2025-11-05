@@ -148,7 +148,7 @@ By following these steps, you will have:
 
 ---
 
-#### Step 2 - Remediation Workflow
+#### Step 2 - Remediation Workflow using Human-in-the-loop
 
 1. **Login to OpenShift Container Platform**  
    Use your provided credentials to log in.
@@ -185,14 +185,23 @@ By following these steps, you will have:
    
    <img src="./images/llamastack-ui-2.png" alt="Prompt Response"  width="500" />
 
+   **Prompt 3**
+   ```text
+   3. "Give template ID of Lightspeed Remediation Playbook Generator"
+   ```
+
+   Expected Response
+   
+   <img src="./images/llamastack-ui-4.png" alt="Prompt Response"  width="500" />
+
 
    > **Important:**  
    > Before proceeding to the next step, **refresh the UI**.  
    > This is required because the underlying LLM in **LlamaStack** may hallucinate if the context length is exceeded.
 
-   **Prompt 3**
+   **Prompt 4**
    ```text
-      Run a Lightspeed job template with ID 19 with extra_vars
+      Run a Lightspeed job template with ID <ID FROM ABOVE RESPONSE> with extra_vars
       {
       "lightspeed_prompt": "Remove the invalid directive 'InvalidDirectiveHere' from the httpd configuration file. Then restart the httpd service. Execute against node 1 host"
       }
@@ -203,7 +212,7 @@ By following these steps, you will have:
    The prompt is the same as in Response 2, but with "Execute against Node 1" added, since the HTTP service is down on Node 1 and the playbook should target it.
 
 
-   **Prompt 4**
+   **Prompt 5**
    ```text
    Run Remediation Workflow  Template  extra_vars is 
    
@@ -213,5 +222,36 @@ By following these steps, you will have:
    **Prompt 5**
 
    ```text
-   Run a job template by name Execute HTTPD Remediation
+   Run a job template by name <Name of the playbook>
    ```
+
+
+#### Step 3 - Remediation Workflow using Agent
+
+Note:
+The following steps assume that a Job Template linked to a playbook capable of resolving the issue already exists in the Ansible Automation Platform (AAP). You can follow the steps above to create a template that resolves the issue. The agent will autonomously identify and trigger this template to remediate the detected issue.
+
+1. **Add description to the template in AAP**
+   - Since we will be executing the ❌ Break Apache template, the Agent should automatically trigger the remediation Job Template created in Step 2.
+   - To make it easier to identify, add a clear description to this template — for example:
+
+         "This template removes the invalid directive from the Apache HTTP file and restarts the service"
+
+3. **Run the Break Apache Job Template**  
+   - Execute the job template ❌ **Break Apache**.  
+   - This inserts an invalid directive into the Apache configuration and restarts the service, causing an intentional failure.
+
+
+4. **Verify Event Pickup in Event-Driven Ansible (EDA)**  
+   - Navigate to **Automation Decisions → Rulebook Activations**.  
+   - Confirm that **EDA** has detected and picked up the event.
+
+5. **Confirm Workflow Execution in AAP Controller**  
+   - Go to **Automation Controller → Jobs**.  
+   - Look for the workflow named **AI Insights and Lightspeed Prompt Generation**.  
+   - ✅ A successful run will be marked **green**.
+
+4. **Check for the Template that gets executed by Agent RCA**  
+   - In Automation Controller → Jobs, verify that the Job Template corresponding to the identified issue has been triggered by the Agent RCA.
+   - This Job Template should automatically resolve the issue.
+    
