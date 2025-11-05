@@ -72,6 +72,18 @@ II. Create "Send Report to Slack" Template
    | Playbook        | playbooks/send_report_slack.yml      |
    | Credentials     | AAP                                  |
    | Extra variables | `slack_token: "<YOUR SLACK TOKEN>"`  |
+
+III. Edit the playbook for ⚙️ Build HTTPD Remediation Template
+
+Navigate to **Automation Execution → Templates → ⚙️ Build HTTPD Remediation Template → Edit Template
+
+   | Parameter       | Value                                |
+   |-----------------|--------------------------------------|
+   | Name            | Get Lightspeed Prompt                |
+   | Inventory       | Demo Inventory                       |
+   | Project         | **MyProject**                          |
+   | Playbook        | **playbooks/httpd_remediation_job_template.yml** |
+   | Credentials     | AAP                                  |
     
 ##### Save template.  
 
@@ -244,12 +256,12 @@ II. Create "Send Report to Slack" Template
     II. Click on ⊕ Add step and link. Fill out the following values
 
     | Parameter         | Value                                        |
-   |-------------------|----------------------------------------------|
-   | Node type         | Project Sync |
-   | Job Template |  ⚙️ Build HTTPD Remediation Template  |
-   | Status        |  Run on success |
-   | Convergence         | Any |
-   | Node alias | (You can leave this blank)   |
+    |-------------------|----------------------------------------------|
+    | Node type         | Project Sync |
+    | Job Template |  ⚙️ Build HTTPD Remediation Template  |
+    | Status        |  Run on success |
+    | Convergence         | Any |
+    | Node alias | (You can leave this blank)   |
 
     III. Click on the blue Next.
 
