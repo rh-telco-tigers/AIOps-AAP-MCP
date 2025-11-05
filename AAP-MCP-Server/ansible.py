@@ -78,29 +78,32 @@ async def get_job_template_id(name: str) -> Any:
 
 
 @mcp.tool()
-async def get_remediation_workflow_template_id() -> Any:
-    """Return the Template for the Playbook Generator job template."""
-    job_data = await make_request(
-        f"{AAP_URL}/workflow_job_templates/?name=Remediation%20Workflow"
-    )
-
-    if not job_data or "results" not in job_data or len(job_data["results"]) == 0:
-        raise ValueError("Could not retrieve recent Lightspeed Prompt job ID")
-
-    return job_data["results"][0]["id"]
-
-@mcp.tool()
 async def run_workflow(extra_vars: dict = {}) -> Any:
     """Run Remediation Workflow with extra_vars."""
 
     try:
-        template_id = await get_remediation_workflow_template_id()
-    except Exception as e:
-        return f"Error: Could not get Remediation Workflow template ID: {e}"
+        # Step 1: Get Remediation Workflow template ID
+        job_data = await make_request(
+            f"{AAP_URL}/workflow_job_templates/?name=Remediation%20Workflow"
+        )
 
-    return await make_request(
-        f"{AAP_URL}/workflow_job_templates/{template_id}/launch/", method="POST", json={"extra_vars": extra_vars}
-    )
+        if not job_data or "results" not in job_data or len(job_data["results"]) == 0:
+            raise ValueError("Could not retrieve Remediation Workflow template ID")
+
+        template_id = job_data["results"][0]["id"]
+
+        # Step 2: Launch the workflow
+        response = await make_request(
+            f"{AAP_URL}/workflow_job_templates/{template_id}/launch/",
+            method="POST",
+            json={"extra_vars": extra_vars}
+        )
+
+        return response
+
+    except Exception as e:
+        return f"Error: Could not run Remediation Workflow: {e}"
+    
 
 
 @mcp.tool()
@@ -247,8 +250,20 @@ async def get_inventory(inventory_id: str) -> Any:
     return await make_request(f"{AAP_URL}/inventories/{inventory_id}/")
 
 
+##@mcp.tool()
+##async def run_job(name: str, extra_vars: dict = {}) -> Any:
+##    """Run a job template by name, optionally with extra_vars."""
+##    try:
+##        template_id = await get_job_template_id(name)
+##    except Exception as e:
+##        return f"Error: Could not get Template ID: {e}"
+
+##    return await make_request(
+##        f"{AAP_URL}/job_templates/{template_id}/launch/", method="POST", json={"extra_vars": extra_vars}
+##    )
+
 @mcp.tool()
-async def run_job(name: str, extra_vars: dict = {}) -> Any:
+async def run_job(name: str) -> Any:
     """Run a job template by name, optionally with extra_vars."""
     try:
         template_id = await get_job_template_id(name)
@@ -256,10 +271,7 @@ async def run_job(name: str, extra_vars: dict = {}) -> Any:
         return f"Error: Could not get Template ID: {e}"
 
     return await make_request(
-        f"{AAP_URL}/job_templates/{template_id}/launch/", method="POST", json={"extra_vars": extra_vars}
-    )
-
-
+        f"{AAP_URL}/job_templates/{template_id}/launch/", method="POST")
 
 
 @mcp.tool()
@@ -512,11 +524,37 @@ async def delete_inventory(inventory_id: int) -> Any:
     return await make_request(f"{AAP_URL}/inventories/{inventory_id}/", method="DELETE")
 
 
+#@mcp.tool()
+#async def list_job_templates() -> Any:
+    #"""List all unique job template names available in Ansible Automation Platform."""
+    #response = await make_request(f"{AAP_URL}/job_templates/")
+
+    # Extract and deduplicate names
+   # job_templates = response.get("results", [])
+  #  unique_names = sorted({template["name"] for template in job_templates if "name" in template})
+
+ #   return unique_names
+
 @mcp.tool()
 async def list_job_templates() -> Any:
-    """List all job templates available in Ansible Automation Platform."""
-    return await make_request(f"{AAP_URL}/job_templates/")
+    """List all unique job template names with their descriptions from Ansible Automation Platform."""
+    response = await make_request(f"{AAP_URL}/job_templates/")
 
+    job_templates = response.get("results", [])
+    
+    # Extract name and description, deduplicate by name
+    seen = set()
+    templates_with_desc = []
+    for template in job_templates:
+        name = template.get("name")
+        description = template.get("description", "")
+        if name and name not in seen:
+            templates_with_desc.append({"name": name, "description": description})
+            seen.add(name)
+    
+    # Sort by name
+    templates_with_desc.sort(key=lambda x: x["name"])
+    return templates_with_desc
 
 
 @mcp.tool()
@@ -710,451 +748,6 @@ async def update_project(project_id: int) -> Any:
     """Trigger a project update (SCM sync) for a specific project."""
     return await make_request(f"{AAP_URL}/projects/{project_id}/update/", method="POST")
 
-
-# Galaxy API Helper Functions
-async def search_galaxy_api(endpoint: str, params: dict = None) -> Any:
-    """Helper function to make requests to Ansible Galaxy API."""
-    base_url = "https://galaxy.ansible.com"
-    url = f"{base_url}{endpoint}"
-
-    timeout = httpx.Timeout(60.0)
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.get(url, params=params)
-
-        if response.status_code != 200:
-            return f"Galaxy API Error {response.status_code}: {response.text}"
-
-        return response.json()
-    except httpx.TimeoutException:
-        return "Galaxy API timeout - service may be slow"
-    except httpx.RequestError as e:
-        return f"Galaxy API request error: {str(e)}"
-    except Exception as e:
-        return f"Galaxy API unexpected error: {str(e)}"
-
-
-def analyze_use_case(description: str) -> dict:
-    """Extract keywords and context from use case description."""
-    description_lower = description.lower()
-
-    # Cloud providers
-    cloud_keywords = {
-        "aws": ["aws", "ec2", "amazon", "s3", "lambda", "cloudformation"],
-        "azure": ["azure", "microsoft", "vm", "resource group"],
-        "gcp": ["gcp", "google cloud", "compute engine", "gke"],
-        "openstack": ["openstack", "nova", "neutron"],
-    }
-
-    # Infrastructure components
-    infra_keywords = {
-        "web": ["web", "apache", "nginx", "http", "https"],
-        "database": ["database", "db", "mysql", "postgresql", "postgres", "mongodb"],
-        "container": ["docker", "kubernetes", "k8s", "container", "pod"],
-        "network": ["network", "firewall", "vpc", "subnet", "security group"],
-        "monitoring": ["monitoring", "metrics", "logging", "prometheus", "grafana"],
-        "security": ["security", "ssl", "tls", "certificate", "vault"],
-    }
-
-    detected_categories = []
-    all_keywords = []
-
-    # Check cloud providers
-    for provider, keywords in cloud_keywords.items():
-        if any(keyword in description_lower for keyword in keywords):
-            detected_categories.append(provider)
-            all_keywords.extend(keywords)
-
-    # Check infrastructure components
-    for component, keywords in infra_keywords.items():
-        if any(keyword in description_lower for keyword in keywords):
-            detected_categories.append(component)
-            all_keywords.extend(keywords)
-
-    # Extract specific action keywords
-    action_keywords = []
-    actions = ["deploy", "install", "configure", "manage", "create", "delete", "start", "stop", "scale"]
-    for action in actions:
-        if action in description_lower:
-            action_keywords.append(action)
-
-    return {
-        "categories": detected_categories,
-        "keywords": list(set(all_keywords)),
-        "actions": action_keywords,
-        "original_description": description,
-    }
-
-
-def rank_content_relevance(content_list: list, keywords: list, content_type: str = "collection") -> list:
-    """Score and sort content based on relevance to keywords."""
-    scored_content = []
-
-    for item in content_list:
-        score = 0
-
-        # Get relevant text fields based on content type
-        if content_type == "collection":
-            searchable_text = f"{item.get('namespace', '')} {item.get('name', '')}".lower()
-        else:  # role
-            searchable_text = f"{item.get('name', '')} {item.get('description', '')} {' '.join(item.get('summary_fields', {}).get('tags', []))}".lower()
-
-        # Score based on keyword matches
-        for keyword in keywords:
-            if keyword.lower() in searchable_text:
-                score += 2
-
-        # Bonus for download count (popularity)
-        download_count = item.get("download_count", 0)
-        if download_count > 1000:
-            score += 3
-        elif download_count > 100:
-            score += 1
-
-        # Bonus for recent updates (for collections)
-        if content_type == "collection" and not item.get("deprecated", False):
-            score += 1
-
-        scored_content.append({"item": item, "relevance_score": score})
-
-    # Sort by relevance score (highest first)
-    scored_content.sort(key=lambda x: x["relevance_score"], reverse=True)
-    return [item["item"] for item in scored_content]
-
-
-# Galaxy Search MCP Tools
-@mcp.tool()
-async def search_galaxy_collections(query: str, tags: str = None, namespace: str = None, limit: int = 20) -> Any:
-    """Search Ansible Galaxy collections by query terms, tags, or namespace."""
-    # Since Galaxy v3 API doesn't support direct search, we need to fetch more data to find matches
-    max_fetch = min(500, limit * 20)  # Fetch significantly more to increase chance of finding matches
-    params = {"limit": max_fetch}
-
-    collections_data = await search_galaxy_api("/api/v3/plugin/ansible/content/published/collections/index/", params)
-
-    if isinstance(collections_data, str):  # Error occurred
-        return collections_data
-
-    collections = collections_data.get("data", [])
-
-    # Filter collections based on query
-    filtered_collections = []
-    query_lower = query.lower()
-
-    for collection in collections:
-        collection_text = f"{collection.get('namespace', '')} {collection.get('name', '')}".lower()
-
-        # Check if query matches namespace or name
-        matches_query = query_lower in collection_text
-        
-        # Additional filtering by namespace if specified
-        matches_namespace = True
-        if namespace:
-            matches_namespace = collection.get("namespace", "").lower() == namespace.lower()
-        
-        if matches_query and matches_namespace:
-            filtered_collections.append(collection)
-
-        if len(filtered_collections) >= limit:
-            break
-
-    # Format response
-    results = []
-    for collection in filtered_collections[:limit]:
-        results.append(
-            {
-                "namespace": collection.get("namespace"),
-                "name": collection.get("name"),
-                "download_count": collection.get("download_count", 0),
-                "latest_version": collection.get("highest_version", {}).get("version"),
-                "deprecated": collection.get("deprecated", False),
-                "created_at": collection.get("created_at"),
-                "updated_at": collection.get("updated_at"),
-                "install_command": f"ansible-galaxy collection install {collection.get('namespace')}.{collection.get('name')}",
-                "galaxy_url": f"https://galaxy.ansible.com/{collection.get('namespace')}/{collection.get('name')}",
-            }
-        )
-
-    return {"query": query, "total_found": len(results), "collections": results}
-
-
-@mcp.tool()
-async def search_galaxy_roles(keyword: str = None, name: str = None, author: str = None, limit: int = 20) -> Any:
-    """Search Ansible Galaxy roles by keyword, name, or author."""
-    # Since Galaxy roles API has limited server-side filtering, we fetch more results for client-side filtering
-    fetch_size = min(500, limit * 20) if keyword or name else limit
-    params = {"page_size": fetch_size}
-
-    if author:
-        params["github_user"] = author  # Use 'github_user' for author filtering
-
-    roles_data = await search_galaxy_api("/api/v1/roles/", params)
-
-    if isinstance(roles_data, str):  # Error occurred
-        return roles_data
-
-    roles = roles_data.get("results", [])
-
-    # Client-side filtering for keyword and name
-    filtered_roles = []
-    for role in roles:
-        matches = True
-        
-        # Filter by keyword
-        if keyword:
-            keyword_lower = keyword.lower()
-            searchable_text = f"{role.get('name', '')} {role.get('description', '')} {' '.join(role.get('summary_fields', {}).get('tags', []))}".lower()
-            matches = matches and keyword_lower in searchable_text
-        
-        # Filter by name
-        if name:
-            name_lower = name.lower()
-            role_name_lower = role.get('name', '').lower()
-            matches = matches and name_lower in role_name_lower
-        
-        if matches:
-            filtered_roles.append(role)
-            
-        if len(filtered_roles) >= limit:
-            break
-
-    # Format response
-    results = []
-    for role in filtered_roles[:limit]:
-        github_user = role.get("github_user", "")
-        role_name = role.get("name", "")
-
-        results.append(
-            {
-                "id": role.get("id"),
-                "name": role_name,
-                "author": github_user,
-                "description": role.get("description", ""),
-                "download_count": role.get("download_count", 0),
-                "stargazers_count": role.get("stargazers_count", 0),
-                "github_repo": role.get("github_repo", ""),
-                "github_branch": role.get("github_branch", ""),
-                "tags": role.get("summary_fields", {}).get("tags", []),
-                "install_command": f"ansible-galaxy role install {github_user}.{role_name}",
-                "galaxy_url": f"https://galaxy.ansible.com/{github_user}/{role_name}",
-            }
-        )
-
-    return {
-        "search_params": {"keyword": keyword, "name": name, "author": author},
-        "total_found": len(results),
-        "roles": results,
-    }
-
-
-@mcp.tool()
-async def get_collection_details(namespace: str, name: str) -> Any:
-    """Get detailed information about a specific Ansible Galaxy collection."""
-    collection_data = await search_galaxy_api(
-        f"/api/v3/plugin/ansible/content/published/collections/index/{namespace}/{name}/"
-    )
-
-    if isinstance(collection_data, str):  # Error occurred
-        return collection_data
-
-    # Get versions information
-    versions_data = await search_galaxy_api(
-        f"/api/v3/plugin/ansible/content/published/collections/index/{namespace}/{name}/versions/"
-    )
-
-    versions = []
-    if isinstance(versions_data, dict) and "data" in versions_data:
-        for version in versions_data["data"]:
-            versions.append({"version": version.get("version"), "created_at": version.get("created_at")})
-
-    return {
-        "namespace": collection_data.get("namespace"),
-        "name": collection_data.get("name"),
-        "download_count": collection_data.get("download_count", 0),
-        "deprecated": collection_data.get("deprecated", False),
-        "created_at": collection_data.get("created_at"),
-        "updated_at": collection_data.get("updated_at"),
-        "latest_version": collection_data.get("highest_version", {}).get("version"),
-        "versions": versions,
-        "install_command": f"ansible-galaxy collection install {namespace}.{name}",
-        "galaxy_url": f"https://galaxy.ansible.com/{namespace}/{name}",
-    }
-
-
-@mcp.tool()
-async def get_role_details(role_id: int) -> Any:
-    """Get detailed information about a specific Ansible Galaxy role."""
-    role_data = await search_galaxy_api(f"/api/v1/roles/{role_id}/")
-
-    if isinstance(role_data, str):  # Error occurred
-        return role_data
-
-    github_user = role_data.get("github_user", "")
-    role_name = role_data.get("name", "")
-
-    return {
-        "id": role_data.get("id"),
-        "name": role_name,
-        "author": github_user,
-        "description": role_data.get("description", ""),
-        "download_count": role_data.get("download_count", 0),
-        "stargazers_count": role_data.get("stargazers_count", 0),
-        "watchers_count": role_data.get("watchers_count", 0),
-        "forks_count": role_data.get("forks_count", 0),
-        "github_repo": role_data.get("github_repo", ""),
-        "github_branch": role_data.get("github_branch", ""),
-        "issue_tracker_url": role_data.get("issue_tracker_url", ""),
-        "license": role_data.get("license", ""),
-        "min_ansible_version": role_data.get("min_ansible_version", ""),
-        "tags": role_data.get("summary_fields", {}).get("tags", []),
-        "platforms": role_data.get("summary_fields", {}).get("platforms", []),
-        "dependencies": role_data.get("summary_fields", {}).get("dependencies", []),
-        "install_command": f"ansible-galaxy role install {github_user}.{role_name}",
-        "galaxy_url": f"https://galaxy.ansible.com/{github_user}/{role_name}",
-    }
-
-
-@mcp.tool()
-async def suggest_ansible_content(use_case: str, check_aap_inventory: bool = True) -> Any:
-    """Intelligently suggest Ansible collections and roles based on use case description."""
-
-    # Analyze the use case to extract keywords and context
-    analysis = analyze_use_case(use_case)
-
-    suggestions = {
-        "use_case_analysis": analysis,
-        "aap_context": {},
-        "recommended_collections": [],
-        "recommended_roles": [],
-        "playbook_suggestions": [],
-    }
-
-    # Check AAP environment if requested
-    if check_aap_inventory and AAP_URL and AAP_TOKEN:
-        try:
-            # Get existing inventories to understand current infrastructure
-            inventories = await make_request(f"{AAP_URL}/inventories/")
-            if isinstance(inventories, dict) and "results" in inventories:
-                suggestions["aap_context"] = {
-                    "existing_inventories": len(inventories["results"]),
-                    "inventory_names": [inv.get("name", "") for inv in inventories["results"][:5]],
-                }
-        except:
-            suggestions["aap_context"] = {"note": "Could not check AAP inventory"}
-
-    # Search for relevant collections
-    collection_searches = []
-    for category in analysis["categories"]:
-        collection_searches.append(category)
-
-    # Add specific searches based on detected categories
-    if "aws" in analysis["categories"]:
-        collection_searches.extend(["amazon.aws", "community.aws"])
-    if "azure" in analysis["categories"]:
-        collection_searches.append("azure.azcollection")
-    if "gcp" in analysis["categories"]:
-        collection_searches.append("google.cloud")
-    if "container" in analysis["categories"]:
-        collection_searches.extend(["community.docker", "kubernetes.core"])
-
-    # Search for collections
-    for search_term in collection_searches[:3]:  # Limit API calls
-        try:
-            collections = await search_galaxy_collections(search_term, limit=5)
-            if isinstance(collections, dict) and "collections" in collections:
-                # Rank by relevance
-                relevant_collections = rank_content_relevance(
-                    collections["collections"], analysis["keywords"], "collection"
-                )
-                suggestions["recommended_collections"].extend(relevant_collections[:2])
-        except:
-            continue
-
-    # Search for relevant roles
-    role_searches = analysis["keywords"][:3]  # Limit searches
-    for keyword in role_searches:
-        try:
-            roles = await search_galaxy_roles(keyword=keyword, limit=5)
-            if isinstance(roles, dict) and "roles" in roles:
-                # Rank by relevance
-                relevant_roles = rank_content_relevance(roles["roles"], analysis["keywords"], "role")
-                suggestions["recommended_roles"].extend(relevant_roles[:2])
-        except:
-            continue
-
-    # Remove duplicates and limit results
-    seen_collections = set()
-    unique_collections = []
-    for collection in suggestions["recommended_collections"]:
-        collection_id = f"{collection.get('namespace')}.{collection.get('name')}"
-        if collection_id not in seen_collections:
-            seen_collections.add(collection_id)
-            unique_collections.append(collection)
-    suggestions["recommended_collections"] = unique_collections[:5]
-
-    seen_roles = set()
-    unique_roles = []
-    for role in suggestions["recommended_roles"]:
-        role_id = f"{role.get('author')}.{role.get('name')}"
-        if role_id not in seen_roles:
-            seen_roles.add(role_id)
-            unique_roles.append(role)
-    suggestions["recommended_roles"] = unique_roles[:5]
-
-    # Generate playbook suggestions based on analysis
-    playbook_suggestions = []
-
-    if "aws" in analysis["categories"] and "ec2" in analysis["keywords"]:
-        playbook_suggestions.append(
-            {
-                "title": "EC2 Instance Management",
-                "description": "Create, start, stop, and terminate EC2 instances",
-                "required_collections": ["amazon.aws"],
-                "key_modules": ["amazon.aws.ec2_instance", "amazon.aws.ec2_security_group"],
-                "example_tasks": [
-                    "Create security group for EC2 instances",
-                    "Launch EC2 instances with specified configuration",
-                    "Configure instance tags and metadata",
-                    "Manage instance state (start/stop/terminate)",
-                ],
-            }
-        )
-
-    if "database" in analysis["categories"]:
-        playbook_suggestions.append(
-            {
-                "title": "Database Server Setup",
-                "description": "Install and configure database servers",
-                "required_collections": ["community.mysql", "community.postgresql"],
-                "key_modules": ["mysql_user", "mysql_db", "postgresql_user", "postgresql_db"],
-                "example_tasks": [
-                    "Install database server packages",
-                    "Configure database server settings",
-                    "Create databases and users",
-                    "Set up backup procedures",
-                ],
-            }
-        )
-
-    if "web" in analysis["categories"]:
-        playbook_suggestions.append(
-            {
-                "title": "Web Server Configuration",
-                "description": "Setup and configure web servers",
-                "required_collections": ["community.general"],
-                "key_modules": ["apache2_module", "nginx", "systemd"],
-                "example_tasks": [
-                    "Install web server packages",
-                    "Configure virtual hosts",
-                    "Manage SSL certificates",
-                    "Setup load balancing",
-                ],
-            }
-        )
-
-    suggestions["playbook_suggestions"] = playbook_suggestions
-
-    return suggestions
 
 
 if __name__ == "__main__":
