@@ -19,6 +19,13 @@ providers:
       max_tokens: 128000
       api_token: ${env.LLAMA_TOKEN}
       tls_verify: false
+  - provider_id: granite
+    provider_type: remote::vllm
+    config:
+      url: ${env.GRANITE_URL}
+      max_tokens: 128000
+      api_token: ${env.GRANITE_TOKEN}
+      tls_verify: false
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
     config: {}
@@ -101,6 +108,10 @@ models:
 - metadata: {}
   model_id: ${env.LLAMA3B_MODEL}
   provider_id: llama-3b
+  model_type: llm
+- metadata: {}
+  model_id: ${env.GRANITE_MODEL}
+  provider_id: granite
   model_type: llm
 - metadata:
     embedding_dimension: 384

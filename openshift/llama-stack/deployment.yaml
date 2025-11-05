@@ -61,6 +61,15 @@ spec:
               value: milvus.db
             - name: LLAMA_STACK_LOGGING
               value: all=debug
+            - name: GRANITE_URL
+              value: 'https://granite-8b-lab-v1-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443/v1'
+            - name: GRANITE_MODEL
+              value: granite-8b-lab-v1
+            - name: GRANITE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: llama-secret
+                  key: granite-token
           ports:
             - containerPort: 8321
               protocol: TCP
