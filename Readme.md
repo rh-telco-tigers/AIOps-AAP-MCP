@@ -17,45 +17,78 @@ The solution automates detection, analysis, notification, and remediation of nod
 <img src="./images/Final-Architecture.png" alt="Architecture" height="400" />
 
 
-This workflow automates the process of detecting, analyzing, and remediating service outages using a combination of Ansible Automation Platform, Event-Driven Ansible, Openshift AI and LLamaStack.
+This workflow demonstrates how Event-Driven Ansible (EDA), AI Insights, and Lightspeed integrate with Ansible Automation Platform (AAP) to detect, analyze, and remediate service outages using a combination of autonomous agents and human-in-the-loop automation.
 
 ---
 
-**1. Alert & Trigger**
+### 🧭 Part 1: Error Detection
 
-Kafka detects a service outage and sends an alert. Event-Driven Ansible (EDA) picks up this alert, triggering the **AI Insights Workflow** in Ansible Automation Platform (AAP).
+**1. Error/Event takes place**
+
+An error or event occurs on a node, triggering the start of the incident lifecycle.
 
 <img src="./images/architecture-1.png" alt="drawing" height= "250" />
 
-**2. AI Analysis**
+**2. Alert & Trigger**
 
-The **AI Insights Workflow** starts by sending the error to a large language model (LLM) for **Root Cause Analysis (RCA)**. It then uses the RCA to generate a prompt for creating a remediation playbook.
+Kafka detects a service outage and publishes an alert.
+Event-Driven Ansible (EDA) subscribes to this event and triggers the AI Insights Workflow in Ansible Automation Platform (AAP).
 
 <img src="./images/architecture-2.png" alt="drawing" height= "250" />
 
-**3. Notification & Review**
+**3. AI Analysis**
 
-Simultaneously, the system notifies the Network Operations Center (NOC) engineer via Slack about the service issue. The engineer can review the RCA-generated prompt and recent events using the **LlamaStack Agent UI**.
+The **AI Insights Workflow** initiates the analysis phase:
+
+- The error is sent to an Agent for Root Cause Analysis (RCA).
+
+- Based on the RCA, a prompt is created to generate a remediation playbook.
+
+- Simultaneously, the Network Operations Center (NOC) engineer is notified via Slack about the issue.
 
 <img src="./images/architecture-3.png" alt="drawing" height= "250" />
 
-**4. Playbook Generation**
+### ⚙️ Part 2: Automated Remediation (Agent-driven)
+**4. Agent Decision**
 
-The engineer uses the **Lightspeed Generation Template** in AAP to connect with **Lightspeed**, which uses the prompt to generate a remediation playbook. This playbook is displayed on the LlamaStack UI for review.
+The Agent evaluates whether it has the capability to resolve the detected issue autonomously:
 
-<img src="./images/architecture-4.png" alt="drawing" height= "250" />
+- If YES: It directly executes the appropriate automation template to remediate the issue.
 
-**5. Playbook Approval & Execution**
+   <img src="./images/architecture-4.png" alt="drawing" height= "250" />
 
-After the engineer approves the generated playbook, they trigger the **Remediation Workflow**. This workflow automatically pushes the playbook to Git and syncs the AAP project.
+- If NO: It escalates the case to the human-in-the-loop process for manual intervention.
 
-<img src="./images/architecture-5.png" alt="drawing" height= "250" />
+   <img src="./images/architecture-5.png" alt="drawing" height= "250" />
 
-**6. Remediation**
 
-Finally, the workflow creates and runs a job template with the new playbook. This action executes the remediation steps, resolving the service outage.
+
+### 🧑‍💻 Part 3: Human-in-the-loop Automation
+
+**5. Playbook Generation using Ansible Lightspeed**
+
+When manual intervention is required:
+
+- The NOC engineer interacts with the Agent UI, where the AI Insights Workflow provides an auto-generated remediation prompt based on RCA. The engineer can review and customize this prompt before proceeding.
+- Once finalized, the Agent communicates with the **AAP MCP (Model Context Protocol)**, which in turn triggers the **Lightspeed Generation Template** within Ansible Automation Platform (AAP) — configured with Ansible Lightspeed credentials.
+- Lightspeed then uses the provided prompt to generate a remediation playbook, which is sent back to the Agent UI for the engineer to review and approve.
+
 
 <img src="./images/architecture-6.png" alt="drawing" height= "250" />
+
+**6. Playbook Approval & Execution**
+
+- After reviewing and approving the generated playbook, the engineer instructs the Agent to initiate the Remediation Workflow.
+- The Agent then triggers the workflow in Ansible Automation Platform (AAP), which automatically commits the playbook to Git and syncs the AAP project for deployment.
+
+<img src="./images/architecture-7.png" alt="drawing" height= "250" />
+
+**7. Remediation**
+
+- Finally, the engineer instructs the Agent to execute the newly created Job Template.
+- The Agent triggers the Job Template in Ansible Automation Platform (AAP), and restoring normal service operation.
+
+<img src="./images/architecture-8.png" alt="drawing" height= "250" />
 
 ## Steps to Run the Workflow:
 
