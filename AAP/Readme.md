@@ -73,17 +73,32 @@ II. Create "Send Report to Slack" Template
    | Credentials     | AAP                                  |
    | Extra variables | `slack_token: "<YOUR SLACK TOKEN>"`  |
 
-III. Edit the playbook for ⚙️ Build HTTPD Remediation Template
+*Click **[URL](./AAP/Slack_Token.md)** for instructions to get Slack Token*
+
+III. Create "Agent RCA" Template
+
+   | Parameter       | Value                                |
+   |-----------------|--------------------------------------|
+   | Name            | Agent                |
+   | Inventory       | Demo Inventory                       |
+   | Project         | MyProject                            |
+   | Playbook        | playbooks/rca.yml      |
+   | Credentials     | AAP                                  |
+   | Extra variables | `llama_stack_url: "<YOUR LLAMA STACK URL>"`  |
+
+IV. Rename ⚙️ Build HTTPD Remediation Template and edit the playbook
 
 Navigate to **Automation Execution → Templates → ⚙️ Build HTTPD Remediation Template → Edit Template
 
    | Parameter       | Value                                |
    |-----------------|--------------------------------------|
-   | Name            | Get Lightspeed Prompt                |
+   | Name            | ⚙️ Build Template            |
    | Inventory       | Demo Inventory                       |
    | Project         | **MyProject**                          |
    | Playbook        | **playbooks/httpd_remediation_job_template.yml** |
    | Credentials     | AAP                                  |
+
+V. Rename the ⚙️ Apache Service Status Check template to Service Status Check
     
 ##### Save template.  
 
@@ -109,7 +124,7 @@ Navigate to **Automation Execution → Templates → ⚙️ Build HTTPD Remediat
    | Parameter         | Value                                        |
    |-------------------|----------------------------------------------|
    | Node type         | Job Template |
-   | Job Template | ⚙️ Apache Service Status Check   |
+   | Job Template | Service Status Check   |
    | Convergence         | Any |
    | Node alias | (You can leave this blank)   |
 
@@ -119,7 +134,7 @@ Navigate to **Automation Execution → Templates → ⚙️ Build HTTPD Remediat
 
 ![Visual after first node](../images/ai-insights-workflow1.png)
 
-8. Add RHEL AI: Analyze Incident step:
+8. Add Agent RCA step:
 
     I. Click on the three dots (⋮ kebab menu) next to the ⚙️ Apache Service Status Check node.
 
@@ -128,7 +143,7 @@ Navigate to **Automation Execution → Templates → ⚙️ Build HTTPD Remediat
    | Parameter         | Value                                        |
    |-------------------|----------------------------------------------|
    | Node type         | Job Template |
-   | Job Template | 🤖 RHEL AI: Analyze Incident   |
+   | Job Template | Agent RCA   |
    | Status        |  Run on success    |
    | Convergence         | Any |
    | Node alias | (You can leave this blank)   |
@@ -249,7 +264,7 @@ Navigate to **Automation Execution → Templates → ⚙️ Build HTTPD Remediat
 
    ![Visual after secomd node](../images/remediation-2.png)
 
-11) Add "⚙️ Build HTTPD Remediation Template" Node
+11) Add "⚙️ Build Template" Node
 
     I. Click on the three dots (kebab menu) next to the 🧾 Commit Fix to Gitea
 
@@ -258,7 +273,7 @@ Navigate to **Automation Execution → Templates → ⚙️ Build HTTPD Remediat
     | Parameter         | Value                                        |
     |-------------------|----------------------------------------------|
     | Node type         | Project Sync |
-    | Job Template |  ⚙️ Build HTTPD Remediation Template  |
+    | Job Template |  ⚙️ Build Template  |
     | Status        |  Run on success |
     | Convergence         | Any |
     | Node alias | (You can leave this blank)   |
