@@ -73,7 +73,7 @@ II. Create "Send Report to Slack" Template
    | Credentials     | AAP                                  |
    | Extra variables | `slack_token: "<YOUR SLACK TOKEN>"`  |
 
-*Click **[URL](./AAP/Slack_Token.md)** for instructions to get Slack Token*
+*Click **[URL](./Slack_Token.md)** for instructions to get Slack Token*
 
 III. Create "Agent RCA" Template
 
