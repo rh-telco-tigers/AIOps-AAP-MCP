@@ -60,9 +60,9 @@ with default values
 ).
                - Update the following fields in the `aap-mcp-secrets` Secret with your information:
                  
-                 -   `AAP_URL`
+                 -   `AAP_URL: https://<your-aap-server>/api/controller/v2`
                  -   `AAP_TOKEN`
-                 -   `EDA_URL`
+                 -   `EDA_URL: https://<your-aap-server>/api/eda/v1`
                  -   `EDA_TOKEN`
 
 
