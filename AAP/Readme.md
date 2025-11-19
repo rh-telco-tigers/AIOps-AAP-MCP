@@ -54,6 +54,7 @@ I. Delete the following templates
    - 📣 Notify via Mattermost
    - 🤖 RHEL AI: Analyze Incident
    - ⚙️ Build HTTPD Remediation Template
+   - ⚙️ Apache Service Status Check
 
 I. Navigate to **Automation Execution → Templates → Create Job Template**  
 
@@ -104,8 +105,15 @@ IV. Create ⚙️ Build Template
    | Playbook        | **playbooks/httpd_remediation_job_template.yml** |
    | Credentials     | AAP                                  |
 
-V. Rename the ⚙️ Apache Service Status Check template to Service Status Check
-    
+V. Create "Service Status Check" Template
+
+   | Parameter       | Value                                |
+   |-----------------|--------------------------------------|
+   | Name            | Service Status Check               |
+   | Inventory       | Demo Inventory                       |
+   | Project         | MyProject                            |
+   | Playbook        | playbooks/check_status.yml           |
+   | Credentials     | SSH                                |
 ##### Save template.  
 
 --- 
@@ -278,7 +286,7 @@ V. Rename the ⚙️ Apache Service Status Check template to Service Status Chec
 
     | Parameter         | Value                                        |
     |-------------------|----------------------------------------------|
-    | Node type         | Project Sync |
+    | Node type         | Job Template |
     | Job Template |  ⚙️ Build Template  |
     | Status        |  Run on success |
     | Convergence         | Any |
