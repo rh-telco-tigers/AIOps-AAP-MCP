@@ -122,12 +122,15 @@ Before you begin, ensure you have the following configured:
    - ✅ A successful run will be marked **green**.
 
 
-4. **Check for Auto-Generated Remediation Template**  
-   - Navigate to **Templates** in AAP.  
-   - You should now see a new job template:  
-     - 🧠 **Lightspeed Remediation Playbook Generator**
+4. Verify Auto-Generated Remediation Template
+   - In AAP, navigate to Templates.
+   - You should now see a newly created job template named Lightspeed Remediation Playbook Generator.
+   - Open the template and edit it:
+        - Under Extra Variables, add the following:
 
-
+                lightspeed_prompt: null
+        - Enable the **Prompt on launch** checkbox for this variable.
+          
 5. **Review Slack Notifications**  
    - Open your Slack channel and review the automated notification.  
    - Key details included:  
