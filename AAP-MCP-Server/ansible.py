@@ -175,7 +175,8 @@ async def run_lightspeed_job_and_get_yaml(template_id: int, extra_vars: dict = {
         debug_info += "DEBUG: Found match with primary pattern\n"
 
     # Step 5: Clean YAML
-    cleaned_yaml = escaped_yaml.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
+    #cleaned_yaml = escaped_yaml.replace('\\n', '\n').replace('\\"', '"').replace('\\\\', '\\')
+    cleaned_yaml = escaped_yaml.replace('\\n', '\n')
     if cleaned_yaml.startswith('"') and cleaned_yaml.endswith('"'):
         cleaned_yaml = cleaned_yaml[1:-1]
     
