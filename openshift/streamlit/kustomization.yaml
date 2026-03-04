@@ -5,4 +5,3 @@ resources:
   - route.yaml
   - service.yaml
   - serviceaccount.yaml
-  - tavily_secret.yaml
