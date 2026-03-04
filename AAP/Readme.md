@@ -110,7 +110,7 @@ V. Create "Service Status Check" Template
    | Parameter       | Value                                |
    |-----------------|--------------------------------------|
    | Name            | Service Status Check               |
-   | Inventory       | Demo Inventory                       |
+   | Inventory       | lab Inventory                       |
    | Project         | MyProject                            |
    | Playbook        | playbooks/check_status.yml           |
    | Credentials     | SSH                                |
